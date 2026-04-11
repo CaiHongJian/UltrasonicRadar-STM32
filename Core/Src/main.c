@@ -5,8 +5,8 @@
   * @brief          : 基于STM32的超声波雷达系统主程序
   ******************************************************************************
   * 【功能描述】
-  * 1. 上电后舵机开始0-180度循环旋转，像雷达一样扫描
-  * 2. 同步进行超声波测距，并将距离实时显示在OLED上
+  * 1. 上电后舵机开始0-180度来回扫描，像雷达一样
+  * 2. OLED显示炫酷的雷达扫描图形UI
   * 3. 当距离小于设定阈值时：LED呼吸灯闪烁 + 蜂鸣器鸣叫 + 舵机停止
   * 4. Key1按下：舵机继续旋转扫描
   * 5. Key2按下：舵机立即停止旋转（任何时候都有效）
@@ -28,6 +28,7 @@
 #include "servo.h"
 #include "breath_led.h"
 #include "buzzer.h"
+#include "radar_ui.h"
 #include <stdio.h>
 
 /* USER CODE END Includes */
@@ -41,10 +42,11 @@
 /* USER CODE BEGIN PD */
 
 /* ==================== 系统参数配置 ==================== */
-#define DISTANCE_THRESHOLD    30.0f   /* 距离报警阈值：小于30cm触发报警 */
-#define SERVO_ROTATE_PERIOD   50      /* 舵机步进周期，单位：毫秒（值越大转越慢） */
-#define ULTRASONIC_PERIOD     100     /* 超声波测距周期，单位：毫秒 */
+#define DISTANCE_THRESHOLD    10.0f   /* 距离报警阈值：小于10cm触发报警 */
+#define SERVO_ROTATE_PERIOD   60      /* 舵机步进周期，单位：毫秒（值越大转越慢） */
+#define ULTRASONIC_PERIOD     120     /* 超声波测距周期，单位：毫秒 */
 #define BREATH_LED_PERIOD     20      /* 呼吸灯更新周期，单位：毫秒 */
+#define DISPLAY_PERIOD        50      /* OLED刷新周期，单位：毫秒 */
 
 /* USER CODE END PD */
 
@@ -64,8 +66,8 @@ uint8_t alarm_flag = 0;               /* 报警标志：1=距离小于阈值，�
 uint32_t timer_servo = 0;             /* 舵机定时器 */
 uint32_t timer_ultrasonic = 0;        /* 超声波定时器 */
 uint32_t timer_breath = 0;            /* 呼吸灯定时器 */
-
-char oled_buf[32];                    /* OLED显示缓冲区 */
+uint32_t timer_display = 0;           /* OLED显示定时器 */
+// char oled_buf[32];                    /* OLED显示缓冲区 */
 
 /* USER CODE END PV */
 
@@ -86,7 +88,6 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -123,28 +124,24 @@ int main(void)
     Servo_Init();               /* 初始化舵机 */
     BreathLED_Init();           /* 初始化呼吸灯 */
     Buzzer_Init();              /* 初始化蜂鸣器 */
+    RadarUI_Init();             /* 初始化雷达UI */
     
-    /* 设置舵机步进角度 - 每次走3度，扫描速度适中 */
-    Servo_SetStep(3.0f);
+    /* 设置舵机步进角度 - 每次走2度，扫描更流畅 */
+    Servo_SetStep(2.0f);
     
-    /* 开机欢迎界面 */
+    /* 开机雷达LOGO */
     OLED_Clear();
-    OLED_ShowString(1, 1, "Ultrasonic Radar");
-    OLED_ShowString(2, 1, "   System Boot");
-    OLED_ShowString(3, 1, " Initializing...");
+    OLED_ShowString(1, 3, "ULTRASONIC");
+    OLED_ShowString(2, 5, "RADAR");
+    OLED_ShowString(4, 2, "System Ready!");
     HAL_Delay(1500);
     OLED_Clear();
-    
-    /* 显示静态界面 */
-    OLED_ShowString(1, 1, "Angle:");
-    OLED_ShowString(2, 1, "Dist :");
-    OLED_ShowString(3, 1, "Alarm:");
-    OLED_ShowString(4, 1, "Servo:");
     
     /* 初始化软件定时器 - 获取当前系统时间 */
     timer_servo = HAL_GetTick();
     timer_ultrasonic = HAL_GetTick();
     timer_breath = HAL_GetTick();
+    timer_display = HAL_GetTick();
 
   /* USER CODE END 2 */
 
@@ -182,7 +179,7 @@ int main(void)
         
         /* ======================================
                    2. 超声波测距（定时执行）
-                   每100ms测量一次
+                   每120ms测量一次
            ====================================== */
         if(HAL_GetTick() - timer_ultrasonic >= ULTRASONIC_PERIOD)
         {
@@ -218,7 +215,7 @@ int main(void)
         
         /* ======================================
                    4. 舵机步进旋转（定时执行）
-                   每50ms步进一次
+                   每60ms步进一次
            ====================================== */
         if(HAL_GetTick() - timer_servo >= SERVO_ROTATE_PERIOD)
         {
@@ -239,47 +236,30 @@ int main(void)
         
         
         /* ======================================
-                   6. OLED实时显示
-                   每次循环都更新显示
+                   6. 雷达UI显示（定时执行）
+                   每50ms刷新一帧画面
            ====================================== */
-        
-        /* 显示当前舵机角度 */
-        OLED_ShowNum(1, 7, (uint8_t)Servo_CurrentAngle, 3);
-        OLED_ShowString(1, 10, "deg");
-        
-        /* 显示距离 */
-        if(distance < 400.0f)  /* 有效距离 */
+        if(HAL_GetTick() - timer_display >= DISPLAY_PERIOD)
         {
-            uint16_t int_part = (uint16_t)distance;
-            uint8_t dec_part = (uint8_t)((distance - int_part) * 10);
-            OLED_ShowNum(2, 7, int_part, 3);
-            OLED_ShowChar(2, 10, '.');
-            OLED_ShowNum(2, 11, dec_part, 1);
-            OLED_ShowString(2, 12, "cm");
-        }
-        else  /* 超出测量范围 */
-        {
-            OLED_ShowString(2, 7, "---.-cm");
-        }
-        
-        /* 显示报警状态 */
-        if(alarm_flag == 1)
-        {
-            OLED_ShowString(3, 7, "WARN!");
-        }
-        else
-        {
-            OLED_ShowString(3, 7, "SAFE ");
-        }
-        
-        /* 显示舵机状态 */
-        if(Servo_RunFlag == 1)
-        {
-            OLED_ShowString(4, 7, "RUN  ");
-        }
-        else
-        {
-            OLED_ShowString(4, 7, "STOP ");
+            timer_display = HAL_GetTick();   /* 重置定时器 */
+            
+            /* ----- 绘制雷达一帧 ----- */
+            OLED_ClearBuffer();              /* 清空绘图缓冲区 */
+            
+            RadarUI_DrawBackground();        /* 1. 画雷达背景（刻度线） */
+            
+            RadarUI_DrawScanLine(Servo_CurrentAngle);  /* 2. 画当前扫描线 */
+            
+            /* 如果距离有效，在雷达上标记目标点 */
+            if(distance > 0 && distance < 60.0f)
+            {
+                RadarUI_DrawTarget(Servo_CurrentAngle, distance);
+            }
+            
+            OLED_Refresh();                  /* 3. 把整个雷达图刷新到屏幕 */
+            
+            /* ----- 在底部显示文字信息 ----- */
+            RadarUI_ShowInfo(distance, alarm_flag, Servo_RunFlag);
         }
 
     /* USER CODE END WHILE */
@@ -346,7 +326,8 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-#ifdef USE_FULL_ASSERT
+
+#ifdef  USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

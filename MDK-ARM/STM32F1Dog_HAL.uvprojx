@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Drivers/Key;../Drivers/OLED;../Drivers/PWM;../Drivers/Servo;../Drivers/Robot;../Drivers/Expression;../Drivers/Ultrasonic;../Drivers/Delay;../Drivers/BreathLED;../Drivers/Buzzer</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../Drivers/Key;../Drivers/OLED;../Drivers/PWM;../Drivers/Servo;../Drivers/Robot;../Drivers/Expression;../Drivers/Ultrasonic;../Drivers/Delay;../Drivers/BreathLED;../Drivers/Buzzer;..\Drivers\RadarUI</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -624,6 +624,21 @@
               <FileName>servo.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\Drivers\Servo\servo.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>RadarUI</GroupName>
+          <Files>
+            <File>
+              <FileName>radar_ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\RadarUI\radar_ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>radar_ui.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Drivers\RadarUI\radar_ui.h</FilePath>
             </File>
           </Files>
         </Group>
