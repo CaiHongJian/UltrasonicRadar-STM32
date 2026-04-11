@@ -1,0 +1,20 @@
+MDK-ARM/STM32F1Dog_HAL/*.o
+MDK-ARM/STM32F1Dog_HAL/*.d
+MDK-ARM/STM32F1Dog_HAL/*.crf
+MDK-ARM/*.chj
+MDK-ARM/STM32F1Dog_HAL/*.htm
+MDK-ARM/STM32F1Dog_HAL/*.sct
+MDK-ARM/STM32F1Dog_HAL/*.map
+MDK-ARM/STM32F1Dog_HAL/*.lnp
+MDK-ARM/STM32F1Dog_HAL/*.dep
+MDK-ARM/STM32F1Dog_HAL/*.hex
+MDK-ARM/STM32F1Dog_HAL/*.axf
+build/
+# 参考代码
+参考代码/旧超声波Ultrasonic
+参考代码/stm32F103C8T6超声波测量项目
+
+!MDK-ARM/STM32F1Dog_HAL.uvprojx
+!MDK-ARM/STM32F1Dog_HAL.uvoptx
+!.mxproject
+!STM32F1Dog_HAL.ioc
