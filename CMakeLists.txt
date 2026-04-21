@@ -48,7 +48,13 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Drivers/Delay/delay.c
     Drivers/Key/key.c
     Drivers/OLED/oled.c
+    Drivers/OLED/oled_font.c
     Drivers/Ultrasonic/ultrasonic.c
+    Drivers/BreathLED/breath_led.c
+    Drivers/Buzzer/buzzer.c
+    Drivers/PWM/pwm.c
+    Drivers/RadarUI/radar_ui.c
+    Drivers/Servo/servo.c
 )
 
 # Add include paths
@@ -58,6 +64,11 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Drivers/Key
     Drivers/OLED
     Drivers/Ultrasonic
+    Drivers/BreathLED
+    Drivers/Buzzer
+    Drivers/PWM
+    Drivers/Servo
+    Drivers/RadarUI
 )
 
 # Add project symbols (macros)
